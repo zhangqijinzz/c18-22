@@ -83,8 +83,55 @@ h1 em { color: #f15a47; font-style: normal; }
 .showcase-heading h2 { font-size: 17px; }
 .count-badge { padding: 5px 9px; color: #75818e; background: #eef0f2; border-radius: 20px; font-size: 9px; }
 .component-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.component-card { min-height: 142px; padding: 12px; background: #fff; border: 1px solid #e8eaed; border-radius: 11px; transition: .18s ease; }
+.component-card { min-height: 142px; padding: 12px; background: #fff; border: 1px solid #e8eaed; border-radius: 11px; transition: .18s ease; position: relative; }
 .component-card:hover { border-color: #d7dbe1; transform: translateY(-2px); box-shadow: 0 7px 16px #24324a08; }
+
+/* —— 预览令牌标注 —— */
+.annotated-card { position: relative; }
+/* 只有悬停或钉选时才出现，平时不遮挡画面 */
+.token-anno-chip { position: absolute; top: 8px; right: 8px; z-index: 4; padding: 3px 6px 3px 5px; display: inline-flex; align-items: center; gap: 4px; color: #8a929d; background: rgba(255,255,255,.94); border: 1px solid #e3e6ea; border-radius: 20px; box-shadow: 0 2px 8px #24324a12; font-size: 8px; font-weight: 700; opacity: 0; pointer-events: none; transform: translateY(-2px); transition: opacity .16s ease, transform .16s ease, color .16s ease; }
+.annotated-card:hover .token-anno-chip, .token-anno-chip.is-pinned { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.token-anno-chip:hover, .token-anno-chip.is-pinned { color: #f15a47; border-color: #f3c9c1; background: #fff8f6; }
+.token-anno-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.token-anno-count { font-family: 'DM Mono', monospace; font-size: 8px; }
+/* 悬停卡片时，用到令牌的元素给出可识别的虚线描边 */
+.annotated-card.anno-open [data-tok] { outline: 1.5px dashed #cfd4db; outline-offset: 1px; }
+.annotated-card.anno-open [data-tok]:hover { cursor: pointer; }
+.annotated-card.anno-open [data-tok][data-tok-on] { outline: 2px solid #f15a47; outline-offset: 2px; box-shadow: 0 0 0 3px #f15a471f; }
+
+.token-anno-panel { z-index: 60; padding: 11px 11px 9px; background: rgba(255,255,255,.98); border: 1px solid #e3e6ea; border-radius: 11px; box-shadow: 0 14px 38px #24324a26; animation: anno-pop .14s ease; }
+.token-anno-panel.is-pinned { border-color: #f15a4755; box-shadow: 0 16px 42px #f15a4724; }
+@keyframes anno-pop { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+.token-anno-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.token-anno-head strong, .token-anno-head small { display: block; }
+.token-anno-head strong { color: #3c4654; font-size: 11px; font-weight: 800; letter-spacing: -.02em; }
+.token-anno-head small { margin-top: 2px; color: #a3a9b3; font-family: 'DM Mono', monospace; font-size: 8px; }
+.token-anno-close { width: 20px; height: 20px; flex: 0 0 auto; color: #9aa1ab; background: #f2f3f5; border: 0; border-radius: 6px; font-size: 13px; line-height: 1; }
+.token-anno-close:hover { color: #f15a47; background: #fff1ee; }
+.token-anno-list { margin-top: 9px; display: grid; gap: 3px; }
+.token-anno-row { width: 100%; padding: 6px 7px; display: flex; align-items: center; gap: 8px; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 7px; text-align: left; transition: background .14s ease, border-color .14s ease; }
+.token-anno-row:hover, .token-anno-row.active { background: #fff5f3; border-color: #f6d9d3; }
+.token-anno-swatch { width: 20px; height: 20px; flex: 0 0 auto; display: grid; place-items: center; color: #9aa1ab; background: #f2f3f5; border-radius: 6px; box-shadow: inset 0 0 0 1px #0000000d; font-size: 11px; }
+.token-anno-name { min-width: 0; flex: 1; }
+.token-anno-name strong, .token-anno-name small { display: block; }
+.token-anno-name strong { color: #586271; font-size: 10px; font-weight: 700; }
+.token-anno-name small { margin-top: 1px; color: #aab1ba; font-family: 'DM Mono', monospace; font-size: 8px; }
+.token-anno-row code { padding: 3px 6px; color: #f15a47; background: #fff; border: 1px solid #f6ddd8; border-radius: 5px; font-family: 'DM Mono', monospace; font-size: 8px; white-space: nowrap; }
+.token-anno-row:hover code { animation: anno-value-pulse .7s ease; }
+@keyframes anno-value-pulse { 0% { background: #fde7e2; } 100% { background: #fff; } }
+.token-anno-foot { margin-top: 8px; padding-top: 7px; color: #adb3bb; border-top: 1px solid #eef0f2; font-size: 8px; }
+
+/* 左侧编辑项被标注跳转命中时的高亮 */
+@keyframes token-edit-flash {
+  0% { background: #fff1ee; box-shadow: 0 0 0 3px #f15a472e; }
+  70% { background: #fff1ee; box-shadow: 0 0 0 3px #f15a4726; }
+  100% { background: transparent; box-shadow: 0 0 0 0 transparent; }
+}
+.token-edit-flash { border-radius: 9px; animation: token-edit-flash 2.2s ease forwards; }
+.color-field.token-edit-flash { padding: 3px 6px; margin: -3px -6px; }
+.scale-inputs .token-edit-flash { padding: 2px 0; }
+@media (hover: none) { .token-anno-chip { opacity: 1; pointer-events: auto; transform: none; } }
+
 .sample-meta { color: #a4abb4; font-size: 9px; }
 .sample-index { color: #c0c5cc; font-family: 'DM Mono', monospace; }
 .sample { min-height: 94px; padding-top: 15px; display: flex; flex-wrap: wrap; align-content: center; gap: 8px; }
