@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { BrandMirrorViewModel } from '../viewmodels/brandMirrorViewModel'
 import type { BrandDocument } from '../models/brandMirrorModels'
 import type { BrandRepository } from '../repositories/brandRepository'
@@ -68,5 +68,41 @@ describe('BrandMirrorViewModel', () => {
     expect(exporter.received).toContain('# BrandMirror 品牌规范')
     expect(exporter.received).toContain('`primary`')
     expect(viewModel.getSnapshot().message).toContain('导出')
+  })
+
+  it('highlights a token editor target and clears it automatically', () => {
+    vi.useFakeTimers()
+    try {
+      const viewModel = new BrandMirrorViewModel(new MemoryRepository())
+      viewModel.initialize()
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBeNull()
+      viewModel.highlightToken('radius.2')
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBe('radius.2')
+      vi.advanceTimersByTime(500)
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBe('radius.2')
+      vi.advanceTimersByTime(2000)
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps the highlight alive across token edits and re-arms it on repeated jumps', () => {
+    vi.useFakeTimers()
+    try {
+      const viewModel = new BrandMirrorViewModel(new MemoryRepository())
+      viewModel.initialize()
+      viewModel.highlightToken('color.primary')
+      viewModel.updateColor('primary', '#123456')
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBe('color.primary')
+      vi.advanceTimersByTime(1000)
+      viewModel.highlightToken('radius.1')
+      vi.advanceTimersByTime(1000)
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBe('radius.1')
+      vi.advanceTimersByTime(1000)
+      expect(viewModel.getSnapshot().highlightedTokenKey).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

@@ -5,7 +5,11 @@ import { INITIAL_TOKENS, type BrandDocument, type BrandMirrorSnapshot, type Bran
 
 type Listener = () => void
 
+const TOKEN_HIGHLIGHT_DURATION_MS = 1800
+
 export class BrandMirrorViewModel {
+  private highlightedTokenKey: string | null = null
+  private highlightTimer: ReturnType<typeof setTimeout> | null = null
   private snapshot: BrandMirrorSnapshot = this.makeSnapshot({ tokens: INITIAL_TOKENS, theme: 'studio', versions: [] })
   private readonly listeners = new Set<Listener>()
   private readonly repository: BrandRepository
@@ -76,6 +80,21 @@ export class BrandMirrorViewModel {
     this.emit()
   }
 
+  highlightToken(tokenKey: string): void {
+    this.highlightedTokenKey = tokenKey
+    this.snapshot = { ...this.snapshot, highlightedTokenKey: tokenKey }
+    this.emit()
+    if (this.highlightTimer) clearTimeout(this.highlightTimer)
+    this.highlightTimer = setTimeout(() => {
+      this.highlightTimer = null
+      if (this.highlightedTokenKey === tokenKey) {
+        this.highlightedTokenKey = null
+        this.snapshot = { ...this.snapshot, highlightedTokenKey: null }
+        this.emit()
+      }
+    }, TOKEN_HIGHLIGHT_DURATION_MS)
+  }
+
   exportBrandGuidelines(): void {
     if (!this.exporter) return
     try {
@@ -115,7 +134,7 @@ export class BrandMirrorViewModel {
   private makeSnapshot(document: Omit<BrandDocument, 'version'>, message = '', status: BrandMirrorSnapshot['status'] = 'ready'): BrandMirrorSnapshot {
     const ratio = contrastRatio(document.tokens.primary, document.tokens.secondary)
     const latestVersion = document.versions[document.versions.length - 1]
-    return { status, tokens: cloneTokens(document.tokens), theme: document.theme, versions: document.versions, compareMode: false, activeVersionId: latestVersion?.id ?? null, contrastRatio: ratio, contrastWarning: ratio < 3, message }
+    return { status, tokens: cloneTokens(document.tokens), theme: document.theme, versions: document.versions, compareMode: false, activeVersionId: latestVersion?.id ?? null, contrastRatio: ratio, contrastWarning: ratio < 3, highlightedTokenKey: this.highlightedTokenKey, message }
   }
 
   private emit(): void {

@@ -32,6 +32,7 @@ export interface BrandMirrorSnapshot {
   activeVersionId: string | null
   contrastRatio: number
   contrastWarning: boolean
+  highlightedTokenKey: string | null
   message: string
 }
 

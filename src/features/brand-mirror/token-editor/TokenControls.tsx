@@ -1,7 +1,9 @@
 import type { BrandMirrorSnapshot, BrandTheme } from '../models/brandMirrorModels'
+import { scaleTokenKey, tokenEditAnchorId, type ScaleField } from '../domain/tokenRefs'
 
 interface TokenControlsProps {
   snapshot: BrandMirrorSnapshot
+  highlightedTokenKey: string | null
   onThemeChange: (theme: BrandTheme) => void
   onColorChange: (field: 'primary' | 'secondary', value: string) => void
   onScaleChange: (field: 'radiusScale' | 'spacingScale' | 'typeScale', index: number, value: number) => void
@@ -14,7 +16,7 @@ const themes: { id: BrandTheme; label: string; note: string }[] = [
   { id: 'night', label: 'Night signal', note: '锐利 · 数字' },
 ]
 
-export function TokenControls({ snapshot, onThemeChange, onColorChange, onScaleChange, onReset }: TokenControlsProps) {
+export function TokenControls({ snapshot, highlightedTokenKey, onThemeChange, onColorChange, onScaleChange, onReset }: TokenControlsProps) {
   return (
     <aside className="control-panel">
       <div className="panel-heading">
@@ -41,8 +43,8 @@ export function TokenControls({ snapshot, onThemeChange, onColorChange, onScaleC
       <section className="control-section">
         <div className="section-label"><span>品牌色</span><span className="muted">HEX / 6 位</span></div>
         <div className="color-fields">
-          <ColorField label="主色" value={snapshot.tokens.primary} onChange={(value) => onColorChange('primary', value)} />
-          <ColorField label="辅助色" value={snapshot.tokens.secondary} onChange={(value) => onColorChange('secondary', value)} />
+          <ColorField label="主色" tokenKey="color.primary" value={snapshot.tokens.primary} highlighted={highlightedTokenKey === 'color.primary'} onChange={(value) => onColorChange('primary', value)} />
+          <ColorField label="辅助色" tokenKey="color.secondary" value={snapshot.tokens.secondary} highlighted={highlightedTokenKey === 'color.secondary'} onChange={(value) => onColorChange('secondary', value)} />
         </div>
         <div className={`contrast-note ${snapshot.contrastWarning ? 'warning' : ''}`}>
           <span className="contrast-icon">◐</span>
@@ -50,19 +52,22 @@ export function TokenControls({ snapshot, onThemeChange, onColorChange, onScaleC
         </div>
       </section>
 
-      <ScaleControl label="圆角尺度" hint="px" values={snapshot.tokens.radiusScale} field="radiusScale" onChange={onScaleChange} />
-      <ScaleControl label="间距体系" hint="px" values={snapshot.tokens.spacingScale} field="spacingScale" onChange={onScaleChange} />
-      <ScaleControl label="字体比例" hint="px" values={snapshot.tokens.typeScale} field="typeScale" onChange={onScaleChange} />
+      <ScaleControl label="圆角尺度" hint="px" values={snapshot.tokens.radiusScale} field="radiusScale" highlightedTokenKey={highlightedTokenKey} onChange={onScaleChange} />
+      <ScaleControl label="间距体系" hint="px" values={snapshot.tokens.spacingScale} field="spacingScale" highlightedTokenKey={highlightedTokenKey} onChange={onScaleChange} />
+      <ScaleControl label="字体比例" hint="px" values={snapshot.tokens.typeScale} field="typeScale" highlightedTokenKey={highlightedTokenKey} onChange={onScaleChange} />
 
       <div className="panel-footer"><span className="live-dot" />所有调整实时同步到预览</div>
     </aside>
   )
 }
 
-function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="color-field"><span>{label}</span><div className="color-input"><input aria-label={label} type="color" value={value} onChange={(event) => onChange(event.target.value)} /><input aria-label={`${label} HEX`} value={value} onChange={(event) => onChange(event.target.value)} /></div></label>
+function ColorField({ label, tokenKey, value, highlighted, onChange }: { label: string; tokenKey: string; value: string; highlighted: boolean; onChange: (value: string) => void }) {
+  return <label id={tokenEditAnchorId(tokenKey)} className={`color-field ${highlighted ? 'token-target-active' : ''}`}><span>{label}</span><div className="color-input"><input aria-label={label} type="color" value={value} onChange={(event) => onChange(event.target.value)} /><input aria-label={`${label} HEX`} value={value} onChange={(event) => onChange(event.target.value)} /></div></label>
 }
 
-function ScaleControl({ label, hint, values, field, onChange }: { label: string; hint: string; values: number[]; field: 'radiusScale' | 'spacingScale' | 'typeScale'; onChange: (field: 'radiusScale' | 'spacingScale' | 'typeScale', index: number, value: number) => void }) {
-  return <section className="control-section scale-section"><div className="section-label"><span>{label}</span><span className="muted">{hint}</span></div><div className="scale-inputs">{values.map((value, index) => <label key={`${field}-${index}`}><span>{index + 1}</span><input aria-label={`${label}${index + 1}`} type="number" min={field === 'typeScale' ? 10 : 0} max={field === 'typeScale' ? 72 : field === 'spacingScale' ? 64 : 40} value={value} onChange={(event) => onChange(field, index, Number(event.target.value))} /></label>)}</div></section>
+function ScaleControl({ label, hint, values, field, highlightedTokenKey, onChange }: { label: string; hint: string; values: number[]; field: ScaleField; highlightedTokenKey: string | null; onChange: (field: ScaleField, index: number, value: number) => void }) {
+  return <section className="control-section scale-section"><div className="section-label"><span>{label}</span><span className="muted">{hint}</span></div><div className="scale-inputs">{values.map((value, index) => {
+    const tokenKey = scaleTokenKey(field, index)
+    return <label key={tokenKey} id={tokenEditAnchorId(tokenKey)} className={highlightedTokenKey === tokenKey ? 'token-target-active' : ''}><span>{index + 1}</span><input aria-label={`${label}${index + 1}`} type="number" min={field === 'typeScale' ? 10 : 0} max={field === 'typeScale' ? 72 : field === 'spacingScale' ? 64 : 40} value={value} onChange={(event) => onChange(field, index, Number(event.target.value))} /></label>
+  })}</div></section>
 }

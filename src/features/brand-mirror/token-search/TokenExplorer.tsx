@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { BrandTokens } from '../models/brandMirrorModels'
+import { listTokenEntries, type TokenCategory as TokenEntryCategory } from '../domain/tokenRefs'
 
-type TokenCategory = 'all' | 'color' | 'radius' | 'spacing' | 'type'
-type TokenEntry = { key: string; label: string; category: Exclude<TokenCategory, 'all'>; value: string }
+type TokenCategory = 'all' | TokenEntryCategory
 
 const filters: { id: TokenCategory; label: string }[] = [
   { id: 'all', label: '全部' },
@@ -15,13 +15,7 @@ const filters: { id: TokenCategory; label: string }[] = [
 export function TokenExplorer({ tokens }: { tokens: BrandTokens }) {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<TokenCategory>('all')
-  const entries = useMemo<TokenEntry[]>(() => [
-    { key: 'color.primary', label: '主色', category: 'color', value: tokens.primary },
-    { key: 'color.secondary', label: '辅助色', category: 'color', value: tokens.secondary },
-    ...tokens.radiusScale.map((value, index) => ({ key: `radius.${index + 1}`, label: `圆角 ${index + 1}`, category: 'radius' as const, value: `${value}px` })),
-    ...tokens.spacingScale.map((value, index) => ({ key: `spacing.${index + 1}`, label: `间距 ${index + 1}`, category: 'spacing' as const, value: `${value}px` })),
-    ...tokens.typeScale.map((value, index) => ({ key: `type.${index + 1}`, label: `字体 ${index + 1}`, category: 'type' as const, value: `${value}px` })),
-  ], [tokens])
+  const entries = useMemo(() => listTokenEntries(tokens), [tokens])
   const normalizedQuery = query.trim().toLowerCase()
   const visibleEntries = entries.filter((entry) => {
     const matchesCategory = category === 'all' || entry.category === category
